@@ -51,12 +51,15 @@ export default function LoginPage() {
       setUser(profile)
       setToast({ id: Date.now().toString(), title: "Login Successful", type: "success" })
       
-      // Role-based redirection
+      // The session is handled by @supabase/ssr automatically in the browser via cookies
+      // which our middleware will now pick up.
+      
       setTimeout(() => {
         if (profile.role === 'admin') router.push("/admin/dashboard")
         else if (profile.role === 'technician') router.push("/technician/jobs")
         else router.push("/home")
       }, 1000)
+
 
     } catch (error: any) {
       setToast({ id: Date.now().toString(), title: error.message || "Login Failed", type: "error" })

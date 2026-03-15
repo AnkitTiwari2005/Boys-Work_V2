@@ -62,7 +62,11 @@ export default function SignupPage() {
       setUser(profile)
       setToast({ id: Date.now().toString(), title: "Account Created!", type: "success" })
       
+      // The session is handled by @supabase/ssr automatically in the browser via cookies
+      // which our middleware will now pick up.
+      
       setTimeout(() => router.push("/home"), 1500)
+
 
     } catch (error: any) {
       setToast({ id: Date.now().toString(), title: error.message || "Signup Failed", type: "error" })

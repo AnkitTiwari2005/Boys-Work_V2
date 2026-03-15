@@ -1,13 +1,7 @@
-import ServiceListClient from "@/components/services/ServiceListClient"
+'use client'
 
-export async function generateStaticParams() {
-  return [
-    { category: 'cleaning' },
-    { category: 'plumbing' },
-    { category: 'electrical' },
-  ]
-}
+import ServicesPage from "../all/page"
 
-export default function ServicesPage({ params }: { params: { category: string } }) {
-  return <ServiceListClient category={params.category} />
+export default function CategoryServicesPage({ params }: { params: { category: string } }) {
+  return <ServicesPage params={params} />
 }

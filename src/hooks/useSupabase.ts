@@ -6,13 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 const supabase = createClient()
 
 // --- SERVICES ---
-export function useServices(category?: string) {
+export function useServices(category?: string, searchTerm?: string) {
   return useQuery({
-    queryKey: ['services', category],
+    queryKey: ['services', category, searchTerm],
     queryFn: async () => {
       let query = supabase.from('services').select('*')
       if (category && category !== 'All' && category !== 'all') {
         query = query.ilike('category', category)
+      }
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`)
       }
       const { data, error } = await query
       if (error) throw error
@@ -20,6 +23,7 @@ export function useServices(category?: string) {
     },
   })
 }
+
 
 // --- BOOKINGS ---
 export function useUserBookings(userId: string) {
