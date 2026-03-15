@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import '../styles/tokens.css';
+
+:root {
+  --background: #f9f9f9;
+  --foreground: #1a1c1c;
+}
+
+body {
+  color: var(--on-background);
+  background: var(--background);
+}
