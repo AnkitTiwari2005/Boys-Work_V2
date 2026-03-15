@@ -20,11 +20,26 @@ import { Badge } from "@/components/ui/Badge"
 import { motion } from "framer-motion"
 import { useAdminStats, useTechnicianJobs } from "@/hooks/useSupabase"
 import { format } from "date-fns"
+import { useUserStore } from "@/store/useUserStore"
+import { NotificationSheet } from "@/components/features/NotificationSheet"
+
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const { user, logout } = useUserStore()
+
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false)
+
   const { data: stats, isLoading: statsLoading } = useAdminStats()
   const { data: recentJobs = [], isLoading: jobsLoading } = useTechnicianJobs()
+
+  const filteredJobs = recentJobs.filter(job => 
+    job.service?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.customer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.id.includes(searchTerm)
+  )
+
 
   const METRICS = [
     { label: "Total Revenue", value: `₹${stats?.totalRevenue.toLocaleString() || 0}`, icon: IndianRupee, trend: "+12%", status: 'up' },
@@ -63,32 +78,45 @@ export default function AdminDashboard() {
       </div>
 
       <main className="flex-1 overflow-y-auto pb-20">
-        <header className="bg-surfaceContainerLowest border-b border-outlineVariant/10 px-8 py-4 flex items-center justify-between sticky top-0 z-50">
-           <div className="flex items-center gap-4 flex-1">
-              <div className="relative w-96 max-w-full">
-                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-onSurfaceVariant" />
-                 <input 
-                   type="text" 
-                   placeholder="Global search..." 
-                   className="w-full pl-12 pr-4 py-2.5 bg-surfaceContainerLow rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-body"
-                 />
-              </div>
-           </div>
-           
-           <div className="flex items-center gap-4">
-              <button className="p-2.5 bg-surfaceContainerLow rounded-xl text-onSurfaceVariant relative">
-                 <ShieldAlert size={20} />
-                 <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full" />
-              </button>
-              <div className="flex items-center gap-3 pl-4 border-l border-outlineVariant/10 text-right">
-                 <div>
-                    <p className="text-xs font-bold text-onSurface">System Admin</p>
-                    <p className="text-[10px] text-onSurfaceVariant font-bold tracking-widest leading-none">ROOT ACCESS</p>
-                 </div>
-                 <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-bold">A</div>
-              </div>
-           </div>
-        </header>
+         <header className="bg-surfaceContainerLowest border-b border-outlineVariant/10 px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+            <div className="flex items-center gap-4 flex-1">
+               <div className="relative w-96 max-w-full">
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-onSurfaceVariant" />
+                  <input
+                    type="text"
+                    placeholder="Search bookings or customers..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-2.5 bg-surfaceContainerLow rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-body"
+                  />
+               </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+               <button
+                onClick={() => setIsNotificationsOpen(true)}
+                className="p-2.5 bg-surfaceContainerLow rounded-xl text-onSurfaceVariant relative"
+               >
+                  <ShieldAlert size={20} />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full" />
+               </button>
+               <div className="flex items-center gap-3 pl-4 border-l border-outlineVariant/10 text-right">
+                  <div className="cursor-pointer group" onClick={() => { logout(); router.push('/login'); }}>
+                     <p className="text-xs font-bold text-onSurface group-hover:text-primary transition-colors">Admin: {user?.full_name || "Root"}</p>
+                     <p className="text-[10px] text-onSurfaceVariant font-bold tracking-widest leading-none">SIGN OUT</p>
+                  </div>
+                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-bold">A</div>
+               </div>
+
+            </div>
+         </header>
+
+         <NotificationSheet
+           userId={user?.id || ""}
+           isOpen={isNotificationsOpen}
+           onClose={() => setIsNotificationsOpen(false)}
+         />
+
 
         <div className="p-8 space-y-8">
            <div>
@@ -111,8 +139,9 @@ export default function AdminDashboard() {
                    </div>
                    <p className="text-xs font-bold text-onSurfaceVariant uppercase tracking-[2px] mb-1">{metric.label}</p>
                    <h3 className="text-2xl font-bold text-onSurface">
-                     {statsLoading ? "..." : metric.value}
+                     {statsLoading ? "..." : (metric.value as string)}
                    </h3>
+
                 </Card>
               ))}
            </div>
@@ -130,10 +159,10 @@ export default function AdminDashboard() {
                       <div className="space-y-4">
                         {[1, 2, 3].map(i => <div key={i} className="h-16 bg-surfaceContainerLow animate-pulse rounded-2xl" />)}
                       </div>
-                    ) : recentJobs.length === 0 ? (
-                      <div className="text-center py-12 opacity-50">No bookings yet.</div>
+                    ) : filteredJobs.length === 0 ? (
+                      <div className="text-center py-12 opacity-50">No results found for "{searchTerm}"</div>
                     ) : (
-                      recentJobs.slice(0, 5).map(job => (
+                      filteredJobs.slice(0, 5).map(job => (
                         <div key={job.id} className="flex items-center gap-4 p-4 hover:bg-surfaceContainerLow rounded-2xl transition-colors group cursor-pointer" onClick={() => router.push(`/admin/bookings/${job.id}`)}>
                            <div className="w-12 h-12 bg-surfaceContainerLow rounded-xl flex items-center justify-center font-bold text-onSurfaceVariant text-[10px]">
                               #{job.id.slice(0,4)}

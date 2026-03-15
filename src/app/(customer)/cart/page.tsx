@@ -21,6 +21,12 @@ import { motion, AnimatePresence } from "framer-motion"
 export default function CartPage() {
   const router = useRouter()
   const { items, addItem, removeItem, clearCart, totalAmount } = useCartStore()
+  const [hasHydrated, setHasHydrated] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasHydrated(true)
+  }, [])
+
 
   if (items.length === 0) {
     return (
@@ -60,11 +66,16 @@ export default function CartPage() {
           </button>
           <h1 className="text-xl font-bold text-onSurface font-display">Your Cart</h1>
           <button 
-            onClick={clearCart}
-            className="ml-auto text-xs font-bold text-error hover:bg-error/5 px-2 py-1 rounded"
+            disabled={!hasHydrated}
+            onClick={() => {
+              if (!hasHydrated) return
+              clearCart()
+            }}
+            className="ml-auto text-xs font-bold text-error hover:bg-error/5 px-2 py-1 rounded disabled:opacity-50"
           >
             Clear All
           </button>
+
         </div>
       </header>
 
@@ -109,22 +120,31 @@ export default function CartPage() {
                       
                       <div className="flex items-center bg-surfaceContainerLow rounded-lg p-1 scale-90 origin-right">
                         <button 
-                          onClick={() => removeItem(item.id)}
-                          className="p-1 text-onSurfaceVariant hover:bg-white rounded-md transition-colors"
+                          disabled={!hasHydrated}
+                          onClick={() => {
+                            if (!hasHydrated) return
+                            removeItem(item.id)
+                          }}
+                          className="p-1 text-onSurfaceVariant hover:bg-white rounded-md transition-colors disabled:opacity-50"
                         >
                           <Minus size={14} />
                         </button>
                         <span className="w-6 text-center text-xs font-bold text-onSurface">
-                          {item.quantity}
+                          {hasHydrated ? item.quantity : "..."}
                         </span>
                         <button 
-                          onClick={() => addItem(item)}
-                          className="p-1 text-onSurfaceVariant hover:bg-white rounded-md transition-colors"
+                          disabled={!hasHydrated}
+                          onClick={() => {
+                            if (!hasHydrated) return
+                            addItem(item)
+                          }}
+                          className="p-1 text-onSurfaceVariant hover:bg-white rounded-md transition-colors disabled:opacity-50"
                         >
                           <Plus size={14} />
                         </button>
                       </div>
                     </div>
+
                   </div>
                 </div>
               </Card>

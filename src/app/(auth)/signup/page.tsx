@@ -47,19 +47,20 @@ export default function SignupPage() {
       // 2. Create profile in users table
       const { data: profile, error: profileError } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           id: authData.user.id,
           full_name: data.fullName,
           email: data.email,
           phone: data.phone,
           role: 'customer'
-        })
+        }, { onConflict: 'id' })
         .select()
         .single()
 
       if (profileError) throw profileError
 
       setUser(profile)
+
       setToast({ id: Date.now().toString(), title: "Account Created!", type: "success" })
       
       // The session is handled by @supabase/ssr automatically in the browser via cookies

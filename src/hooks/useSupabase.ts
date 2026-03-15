@@ -141,7 +141,44 @@ export function useAdminStats() {
   })
 }
 
+// --- NOTIFICATIONS ---
+export function useNotifications(userId: string) {
+  return useQuery({
+    queryKey: ['notifications', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!userId,
+  })
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
 // --- ADMIN PORTAL HOOKS ---
+
 export function useAllUsers() {
   return useQuery({
     queryKey: ['admin-all-users'],

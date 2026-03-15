@@ -19,17 +19,26 @@ import { useCartStore } from "@/store/useCartStore"
 import { useUserStore } from "@/store/useUserStore"
 import { motion, AnimatePresence } from "framer-motion"
 import { createClient } from "@/lib/supabase/client"
+import { useUserProfile } from "@/hooks/useSupabase"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const supabase = createClient()
   const { items, totalAmount, clearCart } = useCartStore()
   const { user } = useUserStore()
+  const { data: profile } = useUserProfile(user?.id || "")
   
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [address, setAddress] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (profile?.address) {
+      setAddress(profile.address)
+    }
+  }, [profile])
+
 
   const handlePayment = async () => {
     if (!address) {

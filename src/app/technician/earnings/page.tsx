@@ -35,6 +35,15 @@ export default function TechnicianEarnings() {
   const weeklyGoal = 15000
   const progressPercent = Math.min(Math.round((totalEarnings / weeklyGoal) * 100), 100)
 
+  const [isWithdrawing, setIsWithdrawing] = React.useState(false)
+
+  const handleWithdraw = async () => {
+    setIsWithdrawing(true)
+    await new Promise(r => setTimeout(r, 2000))
+    alert(`Payout of ₹${totalEarnings} initiated successfully! It will reflect in your account within 24 hours.`)
+    setIsWithdrawing(false)
+  }
+
   return (
     <div className="min-h-screen bg-surfaceContainerLow pb-32">
       <header className="px-6 pt-16 pb-12 bg-gradient-to-br from-primary to-accent rounded-b-[40px] text-white shadow-2xl relative overflow-hidden">
@@ -129,9 +138,14 @@ export default function TechnicianEarnings() {
            </div>
         </section>
 
-        <Button className="w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm" disabled={totalEarnings < 500}>
-           Withdraw to Bank <TrendingUp size={20} />
+        <Button 
+          className="w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm" 
+          disabled={totalEarnings < 500 || isWithdrawing}
+          onClick={handleWithdraw}
+        >
+           {isWithdrawing ? "Processing..." : <>Withdraw to Bank <TrendingUp size={20} /></>}
         </Button>
+
       </main>
 
       <BottomNav />

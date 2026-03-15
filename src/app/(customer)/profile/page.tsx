@@ -21,10 +21,25 @@ import { Button } from "@/components/ui/Button"
 import { Avatar } from "@/components/ui/Avatar"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { useUserStore } from "@/store/useUserStore"
+import { NotificationSheet } from "@/components/features/NotificationSheet"
+import { Toast } from "@/components/ui/Toast"
+import { AnimatePresence } from "framer-motion"
+
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, logout } = useUserStore()
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false)
+  const [toast, setToast] = React.useState<{ id: string, title: string, type: any } | null>(null)
+
+
+  const showPlaceholder = (label: string) => {
+    setToast({
+      id: Date.now().toString(),
+      title: `${label} coming soon!`,
+      type: "info"
+    })
+  }
 
   const handleLogout = () => {
     logout()
@@ -32,17 +47,33 @@ export default function ProfilePage() {
   }
 
   const MENU_ITEMS = [
-    { label: "Account Settings", icon: Settings, color: "text-blue-500", bg: "bg-blue-50" },
-    { label: "Payment Methods", icon: CreditCard, color: "text-purple-500", bg: "bg-purple-50" },
-    { label: "Saved Addresses", icon: MapPin, color: "text-orange-500", bg: "bg-orange-50" },
-    { label: "Notifications", icon: Bell, color: "text-red-500", bg: "bg-red-50" },
-    { label: "Invite Friends", icon: Share2, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { label: "Help Center", icon: HelpCircle, color: "text-cyan-500", bg: "bg-cyan-50" },
+    { label: "Account Settings", icon: Settings, color: "text-blue-500", bg: "bg-blue-50", action: () => showPlaceholder("Account Settings") },
+    { label: "Payment Methods", icon: CreditCard, color: "text-purple-500", bg: "bg-purple-50", action: () => showPlaceholder("Payment Methods") },
+    { label: "Saved Addresses", icon: MapPin, color: "text-orange-500", bg: "bg-orange-50", action: () => showPlaceholder("Saved Addresses") },
+    { label: "Notifications", icon: Bell, color: "text-red-500", bg: "bg-red-50", action: () => setIsNotificationsOpen(true) },
+    { label: "Invite Friends", icon: Share2, color: "text-emerald-500", bg: "bg-emerald-50", action: () => showPlaceholder("Invite Friends") },
+    { label: "Help Center", icon: HelpCircle, color: "text-cyan-500", bg: "bg-cyan-50", action: () => showPlaceholder("Help Center") },
   ]
+
+
 
   return (
     <div className="min-h-screen bg-surfaceContainerLow pb-32">
+      <div className="fixed top-safe inset-x-0 z-[100] flex justify-center p-4">
+        <AnimatePresence>
+          {toast && (
+            <Toast 
+              id={toast.id} 
+              title={toast.title} 
+              type={toast.type} 
+              onClose={() => setToast(null)} 
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
       <header className="px-6 pt-16 pb-12 bg-surfaceContainerLowest rounded-b-[40px] shadow-xl shadow-surfaceContainerLow/50 relative overflow-hidden">
+
         {/* Decorative Background */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full -ml-12 -mb-12" />
@@ -76,7 +107,11 @@ export default function ProfilePage() {
         <Card className="p-2 border-none bg-surfaceContainerLowest rounded-3xl overflow-hidden shadow-xl shadow-surfaceContainerLow/50">
            <div className="divide-y divide-outlineVariant/5">
              {MENU_ITEMS.map((item) => (
-               <button key={item.label} className="w-full flex items-center gap-4 p-4 hover:bg-surfaceContainerLow transition-colors group">
+               <button 
+                key={item.label} 
+                onClick={item.action}
+                className="w-full flex items-center gap-4 p-4 hover:bg-surfaceContainerLow transition-colors group"
+               >
                  <div className={`w-10 h-10 rounded-xl ${item.bg} ${item.color} flex items-center justify-center`}>
                     <item.icon size={20} />
                  </div>
@@ -86,6 +121,13 @@ export default function ProfilePage() {
              ))}
            </div>
         </Card>
+
+        <NotificationSheet 
+          isOpen={isNotificationsOpen} 
+          onClose={() => setIsNotificationsOpen(false)} 
+          userId={user?.id || ""} 
+        />
+
 
         {/* Loyalty Program Card */}
         <Card className="p-6 border-none bg-gradient-to-br from-primary to-accent rounded-3xl text-white relative overflow-hidden">

@@ -24,6 +24,12 @@ export default function ServicesPage({ params }: { params?: { category?: string 
   
   const category = params?.category || 'all'
   const searchTerm = searchParams.get('search') || ""
+  const [hasHydrated, setHasHydrated] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasHydrated(true)
+  }, [])
+
   
   const { data: services = [], isLoading } = useServices(category, searchTerm)
 
@@ -46,18 +52,28 @@ export default function ServicesPage({ params }: { params?: { category?: string 
         </div>
 
         <div className="flex items-center gap-2">
-           <div className="relative flex-1">
+           <form 
+             onSubmit={(e) => {
+               e.preventDefault()
+               const val = (e.currentTarget.elements.namedItem('search') as HTMLInputElement).value
+               router.push(`/services/all?search=${encodeURIComponent(val)}`)
+             }}
+             className="relative flex-1"
+           >
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-onSurfaceVariant" />
               <input 
+                name="search"
                 type="text" 
-                placeholder="Search within this category..." 
+                defaultValue={searchTerm}
+                placeholder="Search services..." 
                 className="w-full pl-11 pr-4 py-3 bg-surfaceContainerLow rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-body"
               />
-           </div>
+           </form>
            <Button variant="outline" className="rounded-xl h-11 px-3">
               <Filter size={18} />
            </Button>
         </div>
+
       </header>
 
       <main className="px-6 py-6 space-y-4">
@@ -101,17 +117,22 @@ export default function ServicesPage({ params }: { params?: { category?: string 
                     <Button 
                       size="sm" 
                       className="rounded-xl px-6 h-9 font-bold shadow-lg"
-                      onClick={() => addItem({
-                        id: service.id,
-                        name: service.name,
-                        price: service.price,
-                        category: service.category,
-                        estimated_time: service.estimated_time,
-                        image_url: service.image_url
-                      })}
+                      disabled={!hasHydrated}
+                      onClick={() => {
+                        if (!hasHydrated) return
+                        addItem({
+                          id: service.id,
+                          name: service.name,
+                          price: service.price,
+                          category: service.category,
+                          estimated_time: service.estimated_time,
+                          image_url: service.image_url
+                        })
+                      }}
                     >
-                      Add
+                      {hasHydrated ? "Add" : "..."}
                     </Button>
+
                   </div>
                 </div>
               </div>

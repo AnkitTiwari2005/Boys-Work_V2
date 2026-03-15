@@ -14,7 +14,8 @@ import {
   Zap, 
   ChevronRight,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -24,6 +25,8 @@ import { useUserStore } from "@/store/useUserStore"
 import { useServices, useUserBookings } from "@/hooks/useSupabase"
 import { useCartStore } from "@/store/useCartStore"
 import { Badge } from "@/components/ui/Badge"
+import { NotificationSheet } from "@/components/features/NotificationSheet"
+import { BottomSheet } from "@/components/ui/BottomSheet"
 
 const CATEGORIES = [
   { name: "Cleaning", icon: Sparkles, color: "bg-blue-100 text-blue-600", href: "/services/cleaning" },
@@ -34,11 +37,22 @@ const CATEGORIES = [
   { name: "Painting", icon: Sparkles, color: "bg-pink-100 text-pink-600", href: "/services/painting" },
 ]
 
+const CITIES = ["Delhi NCR", "Mumbai", "Bangalore", "Hyderabad", "Pune", "Chennai"]
+
 export default function CustomerHome() {
   const router = useRouter()
   const { user } = useUserStore()
   const addItem = useCartStore((state) => state.addItem)
   const [searchTerm, setSearchTerm] = React.useState("")
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false)
+  const [isLocationOpen, setIsLocationOpen] = React.useState(false)
+  const [selectedCity, setSelectedCity] = React.useState("Delhi NCR")
+  const [hasHydrated, setHasHydrated] = React.useState(false)
+
+  React.useEffect(() => {
+    setHasHydrated(true)
+  }, [])
+
   
   const { data: services = [], isLoading: servicesLoading } = useServices()
   const { data: bookings = [] } = useUserBookings(user?.id || "")
@@ -65,7 +79,10 @@ export default function CustomerHome() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-full hover:bg-surfaceContainerLow transition-colors relative">
+            <button 
+              onClick={() => setIsNotificationsOpen(true)}
+              className="p-2 rounded-full hover:bg-surfaceContainerLow transition-colors relative"
+            >
               <Bell size={24} className="text-onSurface" />
               {activeBookings.length > 0 && (
                 <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-surfaceContainerLowest"></span>
@@ -74,12 +91,40 @@ export default function CustomerHome() {
           </div>
         </div>
 
+        <NotificationSheet 
+          isOpen={isNotificationsOpen} 
+          onClose={() => setIsNotificationsOpen(false)} 
+          userId={user?.id || ""} 
+        />
+
+
         {/* Location Selector */}
-        <div className="flex items-center gap-2 mb-6 px-4 py-3 bg-surfaceContainerLow rounded-2xl cursor-pointer">
+        <div 
+          onClick={() => setIsLocationOpen(true)}
+          className="flex items-center gap-2 mb-6 px-4 py-3 bg-surfaceContainerLow rounded-2xl cursor-pointer hover:bg-surfaceContainerHigh transition-colors"
+        >
           <MapPin size={18} className="text-primary" />
-          <span className="text-sm font-medium text-onSurface font-body truncate">Current Location: New Delhi</span>
-          <ChevronRight size={16} className="text-onSurfaceVariant ml-auto flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-[10px] font-bold text-onSurfaceVariant uppercase tracking-widest leading-none mb-1">Service Location</p>
+            <p className="text-sm font-bold text-onSurface">{selectedCity}</p>
+          </div>
+          <ChevronRight size={18} className="text-onSurfaceVariant" />
         </div>
+
+        <BottomSheet isOpen={isLocationOpen} onClose={() => setIsLocationOpen(false)} title="Select your City">
+           <div className="space-y-2">
+              {CITIES.map(city => (
+                <button 
+                  key={city}
+                  onClick={() => { setSelectedCity(city); setIsLocationOpen(false); }}
+                  className={`w-full p-4 rounded-xl text-left text-sm font-bold flex items-center justify-between ${selectedCity === city ? 'bg-primary/5 text-primary border border-primary/10' : 'hover:bg-surfaceContainerLow'}`}
+                >
+                  {city}
+                  {selectedCity === city && <CheckCircle2 size={16} />}
+                </button>
+              ))}
+           </div>
+        </BottomSheet>
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="relative">
@@ -189,17 +234,22 @@ export default function CustomerHome() {
                       <Button 
                         size="sm" 
                         className="h-8 px-4 text-[10px] font-bold rounded-xl shadow-md"
-                        onClick={() => addItem({
-                          id: service.id,
-                          name: service.name,
-                          price: service.price,
-                          category: service.category,
-                          estimated_time: service.estimated_time,
-                          image_url: service.image_url
-                        })}
+                        disabled={!hasHydrated}
+                        onClick={() => {
+                          if (!hasHydrated) return
+                          addItem({
+                            id: service.id,
+                            name: service.name,
+                            price: service.price,
+                            category: service.category,
+                            estimated_time: service.estimated_time,
+                            image_url: service.image_url
+                          })
+                        }}
                       >
-                        Add
+                        {hasHydrated ? "Add" : "..."}
                       </Button>
+
                     </div>
                   </div>
                 </div>
