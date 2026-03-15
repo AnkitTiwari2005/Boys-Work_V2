@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Toast, ToastType } from "@/components/ui/Toast"
 import { AnimatePresence } from "framer-motion"
+import { createClient } from "@/lib/supabase/client"
+import { useUserStore } from "@/store/useUserStore"
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -19,6 +21,8 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const supabase = createClient()
+  const { setUser } = useUserStore()
   const [toast, setToast] = React.useState<{ id: string, title: string, type: ToastType } | null>(null)
   
   const form = useForm<LoginFormValues>({
@@ -28,12 +32,34 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      // Mock Supabase login for UI purposes, DB integration happens in Phase 5
-      console.log("Login data:", data)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+
+      if (authError) throw authError
+
+      // Fetch user profile to get role
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      if (profileError) throw profileError
+
+      setUser(profile)
       setToast({ id: Date.now().toString(), title: "Login Successful", type: "success" })
-      setTimeout(() => router.push("/home"), 1000)
+      
+      // Role-based redirection
+      setTimeout(() => {
+        if (profile.role === 'admin') router.push("/admin/dashboard")
+        else if (profile.role === 'technician') router.push("/technician/jobs")
+        else router.push("/home")
+      }, 1000)
+
     } catch (error: any) {
-      setToast({ id: Date.now().toString(), title: "Login Failed", type: "error" })
+      setToast({ id: Date.now().toString(), title: error.message || "Login Failed", type: "error" })
     }
   }
 
